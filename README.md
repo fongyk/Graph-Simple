@@ -8,4 +8,5 @@ Paper: GraphSage: Representation Learning on Large Graphs
 # requirements
 
 Pytorch: 0.4.0
+
 Python: 2.7
