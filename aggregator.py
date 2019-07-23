@@ -39,7 +39,7 @@ class MeanAggregator(nn.Module):
         unique_nodes = {node:i for i,node in enumerate(unique_nodes_list)}
 
         ## mask[i,j] = 1 means that j-th node appears in i-th neighbor set
-        mask = Variable(torch.zeros(len(sample_neighbors), len(unique_nodes)))
+        mask = torch.zeros(len(sample_neighbors), len(unique_nodes))
         row_indices = [k for k in range(len(sample_neighbors)) for i in range(len(sample_neighbors[k]))]
         col_indices = [unique_nodes[node] for sample_neigh in sample_neighbors for node in sample_neigh]
         mask[row_indices, col_indices] = 1
