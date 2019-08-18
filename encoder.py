@@ -42,5 +42,6 @@ class Encoder(nn.Module):
             encoding = torch.cat((self_feats, embedded_features), dim=1)
         else:
             encoding = embedded_features
-        new_feature = F.relu(self.weight.mm(encoding.t()))
+#         new_feature = F.relu(self.weight.mm(encoding.t()))
+        new_feature = self.weight.mm(encoding.t())
         return new_feature
