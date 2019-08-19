@@ -103,7 +103,7 @@ def train(args):
         random.shuffle(train_nodes)
         for batch in range(iter_num):
             batch_nodes = train_nodes[batch*batch_size: (batch+1)*batch_size]
-            batch_label = Variable(torch.LongTensor(label[batch_nodes]))
+            batch_label = torch.LongTensor(label[batch_nodes])
             if args.use_cuda:
                 batch_label = batch_label.cuda()
             optimizer.zero_grad()
