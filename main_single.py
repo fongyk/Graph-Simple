@@ -67,7 +67,7 @@ def train(args):
     graphsage = makeModel(node_num, class_num, feature_map, adj_lists, args)
 
     # optimizer = torch.optim.SGD(filter(lambda para: para.requires_grad, graphsage.parameters()), lr=args.learning_rate)
-    optimizer = torch.optim.SGD(
+    optimizer = torch.optim.Adam(
         filter(lambda para: para.requires_grad, graphsage.parameters()), lr=args.learning_rate,
     )
     scheduler = StepLR(optimizer, step_size=args.step_size, gamma=0.1)
@@ -223,7 +223,7 @@ if __name__ == "__main__":
     parser.add_argument('-S', '--check_step', type=int, default=50, required=False, help='loss check step.')
     parser.add_argument('-C', '--use_cuda', type=ast.literal_eval, default=True, required=False, help='whether to use gpu (True) or not (False).')
     parser.add_argument('-G', '--use_gcn', type=ast.literal_eval, default=True, required=False, help='whether to use gcn (True) or not (False).')
-    parser.add_argument('-L', '--learning_rate', type=float, default=0.5, required=False, help='training learning rate.')
+    parser.add_argument('-L', '--learning_rate', type=float, default=0.005, required=False, help='training learning rate.')
     parser.add_argument('-N', '--num_sample', type=int, default=10, required=False, help='number of neighbors to aggregate.')
     parser.add_argument('-x', '--suffix', type=str, default='.frmac.npy', required=False, help='feature type, \'f\' for vggnet (512-d), \'fr\' for resnet (2048-d), \'frmac\' for vgg16_rmac (512-d).')
     parser.add_argument('-f', '--feat_dim', type=int, default=512, required=False, help='input feature dim of node.')
