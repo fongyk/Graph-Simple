@@ -72,23 +72,43 @@ class UnsupervisedGraphSAGE_Single(nn.Module):
 
     def loss(self, nodes_anchor, nodes_positive, label):
 
+        ## n-pair loss + classification loss
+
+        # anchor_feature = self.forward(nodes_anchor)
+        # positive_feature = self.forward(nodes_positive)
+        # anchor_score = self.weight.mm(anchor_feature)
+        # positive_score = self.weight.mm(positive_feature)
+        #
+        # anchor_feature = F.normalize(anchor_feature, p=2, dim=0)
+        # positive_feature = F.normalize(positive_feature, p=2, dim=0)
+        # target = label.view(label.size(0), -1)
+        # target = (target == target.t()).float()
+        #
+        # target = target / torch.sum(target, dim=1, keepdim=True).float()
+        # logit = torch.matmul(anchor_feature.t(), positive_feature)
+        #
+        # loss_feature = - torch.mean(torch.sum(target * F.log_softmax(logit, dim=1), dim=1))
+        # loss_class = self.criterion(anchor_score.t(), label.squeeze()) + self.criterion(positive_score.t(), label.squeeze())
+        #
+        # return loss_class + 0.05 * loss_feature
+
+        ## triplet loss
         anchor_feature = self.forward(nodes_anchor)
         positive_feature = self.forward(nodes_positive)
         anchor_score = self.weight.mm(anchor_feature)
         positive_score = self.weight.mm(positive_feature)
-
         anchor_feature = F.normalize(anchor_feature, p=2, dim=0)
         positive_feature = F.normalize(positive_feature, p=2, dim=0)
         target = label.view(label.size(0), -1)
-        target = (target == target.t()).float()
+        target = (target != target.t()).float()
 
-        target = target / torch.sum(target, dim=1, keepdim=True).float()
-        logit = torch.matmul(anchor_feature.t(), positive_feature)
-
-        loss_feature = - torch.mean(torch.sum(target * F.log_softmax(logit, dim=1), dim=1))
+        sqdist = 2 - 2 * torch.matmul(anchor_feature.t(), positive_feature)
+        pos_dist = torch.diagonal(sqdist)
+        diff_dist = pos_dist.view(-1, 1).repeat(1, sqdist.size(0)) - sqdist
+        loss_feature = torch.mean(torch.sum(F.relu(diff_dist + 0.3) * target, dim=1))
         loss_class = self.criterion(anchor_score.t(), label.squeeze()) + self.criterion(positive_score.t(), label.squeeze())
 
-        return loss_class + 0.1 * loss_feature
+        return loss_feature + loss_class * 0.5
 
         ## n-pair loss
         # anchor_feature = self.forward(nodes_anchor)

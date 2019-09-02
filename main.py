@@ -22,13 +22,13 @@ test_dataset = {
     'oxf': {
         'node_num': 5063,
         'img_testpath': '/data4/fong/pytorch/RankNet/building/test_oxf/images',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature/oxford/0',
+        'feature_path': '/data4/fong/pytorch/Graph/test_feature_map/oxford',
         'gt_path': '/data4/fong/oxford5k/oxford5k_groundTruth',
     },
     'par': {
         'node_num': 6392,
         'img_testpath': '/data4/fong/pytorch/RankNet/building/test_par/images',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature/paris/0',
+        'feature_path': '/data4/fong/pytorch/Graph/test_feature_map/paris',
         'gt_path': '/data4/fong/paris6k/paris_groundTruth',
     }
 }
@@ -64,8 +64,8 @@ def makeModel(node_num, class_num, feature_map, adj_lists, args):
 def train(args):
     ## load training data
     print "loading training data ......"
-    node_num, class_num = removeIsolated(args.suffix)
-    # node_num, class_num = 33792, 569
+    # node_num, class_num = removeIsolated(args.suffix)
+    node_num, class_num = 33792, 569
     # label, feature_map, adj_lists = collectGraph_train(node_num, class_num, args.feat_dim, args.suffix)
     label, feature_map, adj_lists = collectGraph_train_v2(node_num, class_num, args.feat_dim, args.num_sample, args.suffix)
 
@@ -76,7 +76,7 @@ def train(args):
     #     print para
 
     # optimizer = torch.optim.SGD(filter(lambda para: para.requires_grad, graphsage.parameters()), lr=args.learning_rate)
-    optimizer = torch.optim.SGD([
+    optimizer = torch.optim.Adam([
         {'params': filter(lambda para: para.requires_grad, graphsage.parameters()), 'lr': args.learning_rate},
     ])
     scheduler = StepLR(optimizer, step_size=args.step_size, gamma=0.1)
@@ -209,13 +209,13 @@ def test(checkpoint_path, class_num, args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'Supervised GraphSAGE, train on Landmark_clean, test on Oxford5k and Paris6k.')
-    parser.add_argument('-E', '--epoch_num', type=int, default=20, required=False, help='training epoch number.')
-    parser.add_argument('-R', '--step_size', type=int, default=20, required=False, help='learning rate decay step_size.')
+    parser.add_argument('-E', '--epoch_num', type=int, default=70, required=False, help='training epoch number.')
+    parser.add_argument('-R', '--step_size', type=int, default=30, required=False, help='learning rate decay step_size.')
     parser.add_argument('-B', '--batch_size', type=int, default=128, required=False, help='training batch size.')
     parser.add_argument('-S', '--check_step', type=int, default=50, required=False, help='loss check step.')
     parser.add_argument('-C', '--use_cuda', type=ast.literal_eval, default=True, required=False, help='whether to use gpu (True) or not (False).')
     parser.add_argument('-G', '--use_gcn', type=ast.literal_eval, default=True, required=False, help='whether to use gcn (True) or not (False).')
-    parser.add_argument('-L', '--learning_rate', type=float, default=0.5, required=False, help='training learning rate.')
+    parser.add_argument('-L', '--learning_rate', type=float, default=0.005, required=False, help='training learning rate.')
     parser.add_argument('-N', '--num_sample', type=int, default=10, required=False, help='number of neighbors to aggregate.')
     parser.add_argument('-x', '--suffix', type=str, default='.frmac.npy', required=False, help='feature type, \'f\' for vggnet (512-d), \'fr\' for resnet (2048-d), \'frmac\' for vgg16_rmac (512-d).')
     parser.add_argument('-f', '--feat_dim', type=int, default=512, required=False, help='input feature dim of node.')

@@ -25,13 +25,13 @@ test_dataset = {
     'oxf': {
         'node_num': 5063,
         'img_testpath': '/data4/fong/pytorch/RankNet/building/test_oxf/images',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature/oxford/0',
+        'feature_path': '/data4/fong/pytorch/Graph/test_feature_map/oxford',
         'gt_path': '/data4/fong/oxford5k/oxford5k_groundTruth',
     },
     'par': {
         'node_num': 6392,
         'img_testpath': '/data4/fong/pytorch/RankNet/building/test_par/images',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature/paris/0',
+        'feature_path': '/data4/fong/pytorch/Graph/test_feature_map/paris',
         'gt_path': '/data4/fong/paris6k/paris_groundTruth',
     }
 }
@@ -69,7 +69,7 @@ def train(args):
 
     graphsage = makeModel(node_num, class_num, feature_map, adj_lists, args)
 
-    optimizer = torch.optim.SGD(filter(lambda para: para.requires_grad, graphsage.parameters()), lr=args.learning_rate, weight_decay=1e-5)
+    optimizer = torch.optim.Adam(filter(lambda para: para.requires_grad, graphsage.parameters()), lr=args.learning_rate, weight_decay=1e-5)
     scheduler = StepLR(optimizer, step_size=args.step_size, gamma=0.1)
 
     # for name, para in graphsage.named_parameters():
@@ -83,6 +83,7 @@ def train(args):
     ## train
     random.seed(2)
     train_nodes = range(args.train_num)
+    positive = [random.choice(filter(lambda node: node != anchor and label[node] == label[anchor], train_nodes)) for anchor in train_nodes]
 
     epoch_num = args.epoch_num
     batch_size = args.batch_size
@@ -100,8 +101,8 @@ def train(args):
         random.shuffle(train_nodes)
         for batch in range(iter_num):
             anchor_nodes = train_nodes[batch*batch_size: (batch+1)*batch_size]
-            positive_nodes = [random.choice(list(adj_lists[n])) for n in anchor_nodes]
-            anchor_label = Variable(torch.LongTensor(label[anchor_nodes]))
+            positive_nodes = [positive[anchor] for anchor in anchor_nodes]
+            anchor_label = torch.LongTensor(label[anchor_nodes])
             if args.use_cuda:
                 anchor_label = anchor_label.cuda()
             optimizer.zero_grad()
@@ -129,16 +130,16 @@ def train(args):
             },
             checkpoint_path)
 
-    # vis = visdom.Visdom(env='Graph', port='8099')
-    # vis.line(
-    #         X = np.arange(1, len(check_loss)+1, 1) * check_step,
-    #         Y = np.array(check_loss),
-    #         opts = dict(
-    #             title=time.strftime('%Y-%m-%d %H:%M:%S') + ', single_unsup, gcn {}'.format(args.use_gcn),
-    #             xlabel='itr.',
-    #             ylabel='loss'
-    #         )
-    # )
+    vis = visdom.Visdom(env='Graph', port='8099')
+    vis.line(
+            X = np.arange(1, len(check_loss)+1, 1) * check_step,
+            Y = np.array(check_loss),
+            opts = dict(
+                title=time.strftime('%Y-%m-%d %H:%M:%S') + ', single_unsup, gcn {}'.format(args.use_gcn),
+                xlabel='itr.',
+                ylabel='loss'
+            )
+    )
 
     return checkpoint_path, class_num
 
@@ -192,13 +193,13 @@ def test(checkpoint_path, class_num, args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'Unsupervised Single-layer GraphSAGE, train on Landmark_clean, test on Oxford5k and Paris6k.')
-    parser.add_argument('-E', '--epoch_num', type=int, default=1, required=False, help='training epoch number.')
-    parser.add_argument('-R', '--step_size', type=int, default=10, required=False, help='learning rate decay step_size.')
-    parser.add_argument('-B', '--batch_size', type=int, default=8, required=False, help='training batch size.')
+    parser.add_argument('-E', '--epoch_num', type=int, default=70, required=False, help='training epoch number.')
+    parser.add_argument('-R', '--step_size', type=int, default=30, required=False, help='learning rate decay step_size.')
+    parser.add_argument('-B', '--batch_size', type=int, default=64, required=False, help='training batch size.')
     parser.add_argument('-S', '--check_step', type=int, default=50, required=False, help='loss check step.')
     parser.add_argument('-C', '--use_cuda', type=ast.literal_eval, default=True, required=False, help='whether to use gpu (True) or not (False).')
     parser.add_argument('-G', '--use_gcn', type=ast.literal_eval, default=True, required=False, help='whether to use gcn (True) or not (False).')
-    parser.add_argument('-L', '--learning_rate', type=float, default=0.05, required=False, help='training learning rate.')
+    parser.add_argument('-L', '--learning_rate', type=float, default=0.005, required=False, help='training learning rate.')
     parser.add_argument('-N', '--num_sample', type=int, default=10, required=False, help='number of neighbors to aggregate.')
     parser.add_argument('-x', '--suffix', type=str, default='.frmac.npy', required=False, help='feature type, \'f\' for vggnet (512-d), \'fr\' for resnet (2048-d), \'frmac\' for vgg16_rmac (512-d).')
     parser.add_argument('-f', '--feat_dim', type=int, default=512, required=False, help='input feature dim of node.')

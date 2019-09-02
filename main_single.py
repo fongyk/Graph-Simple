@@ -13,6 +13,8 @@ import random
 import visdom
 from tqdm import tqdm
 
+import os
+
 import argparse
 import ast
 
@@ -22,13 +24,13 @@ test_dataset = {
     'oxf': {
         'node_num': 5063,
         'img_testpath': '/data4/fong/pytorch/RankNet/building/test_oxf/images',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature/oxford/0',
+        'feature_path': '/data4/fong/pytorch/Graph/test_feature_map/oxford',
         'gt_path': '/data4/fong/oxford5k/oxford5k_groundTruth',
     },
     'par': {
         'node_num': 6392,
         'img_testpath': '/data4/fong/pytorch/RankNet/building/test_par/images',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature/paris/0',
+        'feature_path': '/data4/fong/pytorch/Graph/test_feature_map/paris',
         'gt_path': '/data4/fong/paris6k/paris_groundTruth',
     }
 }
@@ -56,21 +58,28 @@ def makeModel(node_num, class_num, feature_map, adj_lists, args):
 
     return graphsage
 
-def train(args):
+def train(checkpoint_path, round, args):
     ## load training data
     print "loading training data ......"
-    node_num, class_num = removeIsolated(args.suffix)
-    # node_num, class_num = 33792, 569
+    # node_num, class_num = removeIsolated(args.suffix)
+    node_num, class_num = 33792, 569
     # label, feature_map, adj_lists = collectGraph_train(node_num, class_num, args.feat_dim, args.suffix)
-    label, feature_map, adj_lists = collectGraph_train_v2(node_num, class_num, args.feat_dim, args.num_sample, args.suffix)
+    label, feature_map, adj_lists = collectGraph_train_v2(node_num, class_num, args.feat_dim, args.num_sample, args.suffix, round)
 
     graphsage = makeModel(node_num, class_num, feature_map, adj_lists, args)
 
+    # if checkpoint_path is not None:
+    #     checkpoint = torch.load(checkpoint_path)
+    #     graphsage_state_dict = graphsage.state_dict()
+    #     graphsage_state_dict.update({'weight': checkpoint['graph_state_dict']['weight']})
+    #     graphsage_state_dict.update({'encoder.weight': checkpoint['graph_state_dict']['encoder.weight']})
+    #     graphsage.load_state_dict(graphsage_state_dict)
+
     # optimizer = torch.optim.SGD(filter(lambda para: para.requires_grad, graphsage.parameters()), lr=args.learning_rate)
     optimizer = torch.optim.Adam(
-        filter(lambda para: para.requires_grad, graphsage.parameters()), lr=args.learning_rate,
+        filter(lambda para: para.requires_grad, graphsage.parameters()), lr=args.learning_rate*(0.8**round),
     )
-    scheduler = StepLR(optimizer, step_size=args.step_size, gamma=0.1)
+    scheduler = StepLR(optimizer, step_size=args.step_size, gamma=0.5)
 
     # for name, para in graphsage.named_parameters():
     #     print name
@@ -83,10 +92,10 @@ def train(args):
     rand_indices = np.random.permutation(node_num)
     train_nodes = list(rand_indices[:args.train_num])
     val_nodes = list(rand_indices[args.train_num:])
-    for nt in train_nodes:
-        for vt in val_nodes:
-            if vt in adj_lists[nt]:
-                adj_lists[nt].remove(vt)
+    # for nt in train_nodes:
+    #     for vt in val_nodes:
+    #         if vt in adj_lists[nt]:
+    #             adj_lists[nt].remove(vt)
 
     epoch_num = args.epoch_num
     batch_size = args.batch_size
@@ -119,7 +128,6 @@ def train(args):
 
         ## validation
         graphsage.eval()
-
         group = int(math.ceil(len(val_nodes)/float(batch_size)))
         val_cnt = 0
         for batch in range(group):
@@ -131,6 +139,20 @@ def train(args):
         val_accuracy.append(val_cnt/float(len(val_nodes)))
         print time.strftime('%Y-%m-%d %H:%M:%S'), "Epoch: {}, Validation Accuracy: {:.4f}".format(e, val_cnt/float(len(val_nodes)))
         print "******" * 10
+
+    ## extract new feature
+    graphsage.eval()
+    new_feature_map = torch.FloatTensor()
+    batch_num = int(math.ceil(node_num/float(batch_size)))
+    for batch in tqdm(range(batch_num)):
+        start_node = batch*args.batch_size
+        end_node = min((batch+1)*args.batch_size, node_num)
+        test_nodes = range(start_node, end_node)
+        new_feature, _ = graphsage(test_nodes)
+        new_feature = F.normalize(new_feature, p=2, dim=0)
+        new_feature_map = torch.cat((new_feature_map, new_feature.t().cpu().data), dim=0)
+    new_feature_map = new_feature_map.numpy()
+    np.save('/data4/fong/pytorch/Graph/train_feature_map/feature_map_{}.npy'.format(round+1), new_feature_map)
 
     checkpoint_path = 'checkpoint/checkpoint_single_{}.pth'.format(time.strftime('%Y%m%d%H%M'))
     torch.save({
@@ -167,10 +189,10 @@ def train(args):
 
     return checkpoint_path, class_num
 
-def test(checkpoint_path, class_num, args):
+def test(checkpoint_path, class_num, round, args):
     for key in building.keys():
         node_num = test_dataset[key]['node_num']
-        old_feature_map, adj_lists = collectGraph_test(test_dataset[key]['feature_path'], node_num, args.feat_dim, args.num_sample, args.suffix)
+        old_feature_map, adj_lists = collectGraph_test(test_dataset[key]['feature_path'], node_num, args.feat_dim, args.num_sample, args.suffix, round)
 
         graphsage = makeModel(node_num, class_num, old_feature_map, adj_lists, args)
 
@@ -191,6 +213,8 @@ def test(checkpoint_path, class_num, args):
             new_feature = F.normalize(new_feature, p=2, dim=0)
             new_feature_map = torch.cat((new_feature_map, new_feature.t().cpu().data), dim=0)
         new_feature_map = new_feature_map.numpy()
+        np.save(os.path.join(test_dataset[key]['feature_path'], 'feature_map_{}.npy'.format(round+1)), new_feature_map)
+
         old_similarity = np.dot(old_feature_map, old_feature_map.T)
         new_similarity = np.dot(new_feature_map, new_feature_map.T)
         mAP_old = building[key].evalRetrieval(old_similarity, retrieval_result)
@@ -217,8 +241,8 @@ def test(checkpoint_path, class_num, args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'Supervised single-layer GraphSAGE, train on Landmark_clean, test on Oxford5k and Paris6k.')
-    parser.add_argument('-E', '--epoch_num', type=int, default=80, required=False, help='training epoch number.')
-    parser.add_argument('-R', '--step_size', type=int, default=80, required=False, help='learning rate decay step_size.')
+    parser.add_argument('-E', '--epoch_num', type=int, default=70, required=False, help='training epoch number.')
+    parser.add_argument('-R', '--step_size', type=int, default=30, required=False, help='learning rate decay step_size.')
     parser.add_argument('-B', '--batch_size', type=int, default=128, required=False, help='training batch size.')
     parser.add_argument('-S', '--check_step', type=int, default=50, required=False, help='loss check step.')
     parser.add_argument('-C', '--use_cuda', type=ast.literal_eval, default=True, required=False, help='whether to use gpu (True) or not (False).')
@@ -229,9 +253,11 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--feat_dim', type=int, default=512, required=False, help='input feature dim of node.')
     parser.add_argument('-d', '--embed_dim', type=int, default=512, required=False, help='embedded feature dim of encoder.')
     parser.add_argument('-T', '--train_num', type=int, default=25000, required=False, help='number of training nodes (less than 36460). Left for validation.')
+    parser.add_argument('-O', '--round', type=int, default=1, required=False, help='number of updating features and graph')
     args, _ = parser.parse_known_args()
     print "< < < < < < < < Supervised Single-layer GraphSAGE > > > > > > >"
     print "= = = = = = = = = = = PARAMETERS SETTING = = = = = = = = = = ="
+    print "round:", args.round
     print "epoch_num:", args.epoch_num
     print "step_size:", args.step_size
     print "batch_size:", args.batch_size
@@ -246,10 +272,16 @@ if __name__ == "__main__":
     print "use_gcn:", args.use_gcn
     print "= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="
 
-    print "training ......"
-    checkpoint_path, class_num = train(args)
+    # print "training ......"
+    # checkpoint_path, class_num = train(args)
+    #
+    # print "testing ......"
+    # # checkpoint_path = 'checkpoint/checkpoint_single_201907261436.pth'
+    # # class_num = 569
+    # test(checkpoint_path, class_num, args)
 
-    print "testing ......"
-    # checkpoint_path = 'checkpoint/checkpoint_single_201904211817.pth'
-    # class_num = 569
-    test(checkpoint_path, class_num, args)
+    checkpoint_path = None
+    for r in range(args.round):
+        print "Round", r
+        checkpoint_path, class_num = train(checkpoint_path, r, args)
+        test(checkpoint_path, class_num, r, args)

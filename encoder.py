@@ -1,6 +1,7 @@
 from PACK import *
 
-from aggregator import MeanAggregator
+# from aggregator import MeanAggregator
+from aggregator_with_weight import MeanAggregator
 
 class Encoder(nn.Module):
     '''
@@ -33,7 +34,7 @@ class Encoder(nn.Module):
                 ## when it is not the first time to call 'embedding', i.e., 'lambda nodes: encoder_1(nodes).t()' in encoder_2,
                 ## these is no need to transform node to 'torch.LongTensor(nodes).cuda()' again.
                 ##
-                if type(nodes) == torch.cuda.LongTensor:
+                if type(nodes) == torch.Tensor:
                     self_feats = self.embedding(nodes)
                 else:
                     self_feats = self.embedding(torch.LongTensor(nodes).cuda())
@@ -42,6 +43,6 @@ class Encoder(nn.Module):
             encoding = torch.cat((self_feats, embedded_features), dim=1)
         else:
             encoding = embedded_features
-#         new_feature = F.relu(self.weight.mm(encoding.t()))
+        # new_feature = F.relu(self.weight.mm(encoding.t()))
         new_feature = self.weight.mm(encoding.t())
         return new_feature
