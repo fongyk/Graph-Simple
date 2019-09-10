@@ -129,7 +129,7 @@ def train(args):
         group = int(math.ceil(len(val_nodes)/float(batch_size)))
         val_cnt = 0
         for batch in range(group):
-            batch_nodes = val_nodes[batch*batch_size: (batch+1)*batch_size-1]
+            batch_nodes = val_nodes[batch*batch_size: (batch+1)*batch_size]
             batch_label = label[batch_nodes].squeeze()
             _, score = graphsage(batch_nodes)
             batch_predict = np.argmax(score.cpu().data.numpy(), axis=1)
