@@ -63,7 +63,6 @@ def train(checkpoint_path, round, args):
     print "loading training data ......"
     # node_num, class_num = removeIsolated(args.suffix)
     node_num, class_num = 33792, 569
-    # label, feature_map, adj_lists = collectGraph_train(node_num, class_num, args.feat_dim, args.suffix)
     label, feature_map, adj_lists = collectGraph_train_v2(node_num, class_num, args.feat_dim, args.num_sample, args.suffix, round)
 
     graphsage = makeModel(node_num, class_num, feature_map, adj_lists, args)
@@ -80,11 +79,6 @@ def train(checkpoint_path, round, args):
         filter(lambda para: para.requires_grad, graphsage.parameters()), lr=args.learning_rate*(0.8**round),
     )
     scheduler = StepLR(optimizer, step_size=args.step_size, gamma=0.5)
-
-    # for name, para in graphsage.named_parameters():
-    #     print name
-    #     print para
-    # return
 
     ## train
     np.random.seed(2)
@@ -198,8 +192,9 @@ def test(checkpoint_path, class_num, round, args):
 
         checkpoint = torch.load(checkpoint_path)
         graphsage_state_dict = graphsage.state_dict()
-        graphsage_state_dict.update({'weight': checkpoint['graph_state_dict']['weight']})
         graphsage_state_dict.update({'encoder.weight': checkpoint['graph_state_dict']['encoder.weight']})
+        graphsage_state_dict.update({'fc.weight': checkpoint['graph_state_dict']['fc.weight']})
+        graphsage_state_dict.update({'fc.bias': checkpoint['graph_state_dict']['fc.bias']})
         graphsage.load_state_dict(graphsage_state_dict)
         graphsage.eval()
 
@@ -271,14 +266,6 @@ if __name__ == "__main__":
     print "use_cuda:", args.use_cuda
     print "use_gcn:", args.use_gcn
     print "= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="
-
-    # print "training ......"
-    # checkpoint_path, class_num = train(args)
-    #
-    # print "testing ......"
-    # # checkpoint_path = 'checkpoint/checkpoint_single_201907261436.pth'
-    # # class_num = 569
-    # test(checkpoint_path, class_num, args)
 
     checkpoint_path = None
     for r in range(args.round):
