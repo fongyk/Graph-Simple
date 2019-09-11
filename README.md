@@ -5,7 +5,7 @@ Based on the implementation of https://github.com/williamleif/graphsage-simple s
 
 # requirements
 
-Pytorch: 0.4.0
+Pytorch: 1.0
 
 Python: 2.7
 
