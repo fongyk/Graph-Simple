@@ -193,8 +193,6 @@ def test(checkpoint_path, class_num, round, args):
         checkpoint = torch.load(checkpoint_path)
         graphsage_state_dict = graphsage.state_dict()
         graphsage_state_dict.update({'encoder.weight': checkpoint['graph_state_dict']['encoder.weight']})
-        graphsage_state_dict.update({'fc.weight': checkpoint['graph_state_dict']['fc.weight']})
-        graphsage_state_dict.update({'fc.bias': checkpoint['graph_state_dict']['fc.bias']})
         graphsage.load_state_dict(graphsage_state_dict)
         graphsage.eval()
 
@@ -205,7 +203,6 @@ def test(checkpoint_path, class_num, round, args):
             end_node = min((batch+1)*args.batch_size, node_num)
             test_nodes = range(start_node, end_node)
             new_feature, _ = graphsage(test_nodes)
-            new_feature = F.normalize(new_feature, p=2, dim=0)
             new_feature_map = torch.cat((new_feature_map, new_feature.t().cpu().data), dim=0)
         new_feature_map = new_feature_map.numpy()
         np.save(os.path.join(test_dataset[key]['feature_path'], 'feature_map_{}.npy'.format(round+1)), new_feature_map)
