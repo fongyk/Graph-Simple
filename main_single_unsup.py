@@ -70,7 +70,7 @@ def train(args):
     graphsage = makeModel(node_num, class_num, feature_map, adj_lists, args)
 
     optimizer = torch.optim.Adam(filter(lambda para: para.requires_grad, graphsage.parameters()), lr=args.learning_rate, weight_decay=1e-5)
-    scheduler = StepLR(optimizer, step_size=args.step_size, gamma=0.1)
+    scheduler = StepLR(optimizer, step_size=args.step_size, gamma=0.5)
 
     # for name, para in graphsage.named_parameters():
     #     print name
@@ -164,7 +164,6 @@ def test(checkpoint_path, class_num, args):
             end_node = min((batch+1)*args.batch_size, node_num)
             test_nodes = range(start_node, end_node)
             new_feature = graphsage(test_nodes)
-            new_feature = F.normalize(new_feature, p=2, dim=0)
             new_feature_map = torch.cat((new_feature_map, new_feature.t().cpu().data), dim=0)
         new_feature_map = new_feature_map.numpy()
         old_similarity = np.dot(old_feature_map, old_feature_map.T)
