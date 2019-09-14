@@ -5,7 +5,7 @@ Based on the implementation of https://github.com/williamleif/graphsage-simple s
 
 # note
 
-Online query-embedding inference.
+Online query embedding inference.
 
 Query is not included in database.
 
