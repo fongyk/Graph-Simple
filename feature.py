@@ -16,6 +16,7 @@ from collections import defaultdict
 
 import os
 import sys
+import scipy.io as sio
 
 img_transform = transforms.Compose([
     transforms.Resize(480),
@@ -150,6 +151,21 @@ def proceeRMACfeature(img_path, src_path, dest_path):
             cnt += 1
     print "number of features:", cnt
 
+def loadRMACfeatureFromMat(feature_path, matFile):
+    '''
+    load 512-d vgg16_rmac pca-whitened feature from .mat file
+    '''
+
+    mat = sio.loadmat(os.path.join(feature_path, matFile))
+    database_feature = mat['feat']
+    query_feature = mat['qfeat']
+    query_idx = mat['qidx']
+    query_idx = query_idx.reshape(55)
+
+    np.save(os.path.join(feature_path, 'database_feature.npy'), database_feature.T)
+    np.save(os.path.join(feature_path, 'query_feature.npy'), query_feature.T)
+    np.save(os.path.join(feature_path, 'query_idx.npy'), query_idx)
+
 if __name__ == "__main__":
     # model, suffix = AlexNetFeature(), '.f.npy'
     # model, suffix = VGGNetFeature(), '.f.npy'
@@ -161,3 +177,6 @@ if __name__ == "__main__":
     # proceeRMACfeature('/data4/fong/landmark_clean', '/data4/fong/R-MAC/vgg16_rmac/landmark_clean', '/data4/fong/pytorch/Graph/train_feature')
     # proceeRMACfeature('/data4/fong/pytorch/RankNet/building/test_oxf', '/data4/fong/R-MAC/vgg16_rmac/oxford5k', '/data4/fong/pytorch/Graph/test_feature/oxford')
     # proceeRMACfeature('/data4/fong/pytorch/RankNet/building/test_par', '/data4/fong/R-MAC/vgg16_rmac/paris6k', '/data4/fong/pytorch/Graph/test_feature/paris')
+
+    loadRMACfeatureFromMat('/data4/fong/pytorch/Graph/test_feature_map/oxford', 'oxf_feat.mat')
+    loadRMACfeatureFromMat('/data4/fong/pytorch/Graph/test_feature_map/paris', 'par_feat.mat')

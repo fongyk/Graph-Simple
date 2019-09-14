@@ -146,7 +146,7 @@ def train(args):
 def test(checkpoint_path, class_num, args):
     for key in building.keys():
         node_num = test_dataset[key]['node_num']
-        old_feature_map, adj_lists = collectGraph_test(test_dataset[key]['feature_path'], node_num, args.feat_dim, args.num_sample, args.suffix)
+        old_feature_map, adj_lists, old_query = collectGraph_test(test_dataset[key]['feature_path'], node_num, args.feat_dim, args.num_sample, args.suffix)
 
         graphsage = makeModel(node_num, class_num, old_feature_map, adj_lists, args)
 
@@ -157,6 +157,14 @@ def test(checkpoint_path, class_num, args):
         graphsage.load_state_dict(graphsage_state_dict)
         graphsage.eval()
 
+        ## process query
+        query = torch.from_numpy(old_query).float()
+        if args.use_cuda:
+            query = query.cuda()
+        new_query = graphsage.encoder.queryForward(query)
+        new_query = new_query.cpu().detach().numpy()
+
+        ## process database
         batch_num = int(math.ceil(node_num/float(args.batch_size)))
         new_feature_map = torch.FloatTensor()
         for batch in tqdm(range(batch_num)):
@@ -166,10 +174,8 @@ def test(checkpoint_path, class_num, args):
             new_feature = graphsage(test_nodes)
             new_feature_map = torch.cat((new_feature_map, new_feature.t().cpu().data), dim=0)
         new_feature_map = new_feature_map.numpy()
-        old_similarity = np.dot(old_feature_map, old_feature_map.T)
-        new_similarity = np.dot(new_feature_map, new_feature_map.T)
-        mAP_old = building[key].evalRetrieval(old_similarity, retrieval_result)
-        mAP_new = building[key].evalRetrieval(new_similarity, retrieval_result)
+        mAP_old = building[key].evalQuery(old_feature_map, old_query, retrieval_result)
+        mAP_new = building[key].evalQuery(new_feature_map, new_query, retrieval_result)
         print time.strftime('%Y-%m-%d %H:%M:%S'), 'eval {}'.format(key)
         print 'base feature: {}, new feature: {}'.format(old_feature_map.shape, new_feature_map.shape)
         print 'base mAP: {:.4f}, new mAP: {:.4f}, improve: {:.4f}'.format(mAP_old, mAP_new, mAP_new-mAP_old)
@@ -185,8 +191,7 @@ def test(checkpoint_path, class_num, args):
             mean_feature = F.normalize(mean_feature, p=2, dim=1)
             mean_feature_map = torch.cat((mean_feature_map, mean_feature.cpu().data), dim=0)
         mean_feature_map = mean_feature_map.numpy()
-        mean_similarity = np.dot(mean_feature_map, mean_feature_map.T)
-        mAP_mean = building[key].evalRetrieval(mean_similarity, retrieval_result)
+        mAP_mean = building[key].evalQuery(mean_feature_map, old_query, retrieval_result)
         print 'mean aggregation mAP: {:.4f}'.format(mAP_mean)
         print ""
 
@@ -225,6 +230,5 @@ if __name__ == "__main__":
     checkpoint_path, class_num = train(args)
 
     print "testing ......"
-    # checkpoint_path = 'checkpoint/checkpoint_single_unsup_201904291614.pth'
-    # class_num = 569
+    # checkpoint_path, class_num = 'checkpoint/checkpoint_single_unsup_201909121128.pth', 569
     test(checkpoint_path, class_num, args)

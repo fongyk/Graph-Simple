@@ -3,7 +3,7 @@ from collections import OrderedDict
 import subprocess
 import numpy as np
 
-class buildTestData:
+class buildTestData(object):
     def __init__(self, img_path, gt_path, eval_func):
         self.img_path = img_path
         self.gt_path = gt_path
@@ -40,12 +40,29 @@ class buildTestData:
         self.q_num = len(self.q_index)
 
     def evalRetrieval(self, similarity, save_path):
+        '''
+        Assume that query is included in database.
+        '''
         if not os.path.exists(save_path):
             os.makedirs(save_path)
         ranks = np.argsort(similarity, axis=1)[:,::-1]
         APs = [self.eval_q(i, ranks[q,:], save_path) for (i, q) in enumerate(self.q_index)]
         # for q in range(self.q_num):
         #     print "{}: {:.4f}".format(self.q_names[q], APs[q])
+        return np.mean(APs)
+
+    def evalQuery(self, database_feature, query_feature, save_path):
+        '''
+        Assume that query is NOT included in database.
+        Note that self.q_index is not sorted by image names.
+        Query and database is sorted by image names.
+        '''
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+        similarity = query_feature.dot(database_feature.T)
+        ranks = np.argsort(similarity, axis=1)[:,::-1]
+        q_id = np.argsort(self.q_index)
+        APs = [self.eval_q(q, ranks[i,:], save_path) for (i, q) in enumerate(q_id)]
         return np.mean(APs)
 
     def eval_q(self, q, rank, save_path):

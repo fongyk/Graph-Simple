@@ -29,15 +29,7 @@ class Encoder(nn.Module):
         embedded_features = self.aggregator.forward(nodes, [self.adj_lists[int(node)] for node in nodes], self.num_sample)
         if not self.gcn:
             if self.use_cuda:
-                ##
-                ## Type of nodes was transformed to 'torch.LongTensor(nodes).cuda()' when we first call 'embedding',
-                ## when it is not the first time to call 'embedding', i.e., 'lambda nodes: encoder_1(nodes).t()' in encoder_2,
-                ## these is no need to transform node to 'torch.LongTensor(nodes).cuda()' again.
-                ##
-                if type(nodes) == torch.Tensor:
-                    self_feats = self.embedding(nodes)
-                else:
-                    self_feats = self.embedding(torch.LongTensor(nodes).cuda())
+                self_feats = self.embedding(torch.LongTensor(nodes).cuda())
             else:
                 self_feats = self.embedding(torch.LongTensor(nodes))
             encoding = torch.cat((self_feats, embedded_features), dim=1)
@@ -46,3 +38,17 @@ class Encoder(nn.Module):
         new_feature = self.weight.mm(encoding.t())
         new_feature = F.normalize(new_feature, p=2, dim=0)
         return new_feature
+
+    def queryForward(self, query_feature):
+        '''
+        online query embedding inference.
+        '''
+        embedded_features = query_feature
+        if not self.gcn:
+            encoding = torch.cat((query_feature, embedded_features), dim=1)
+        else:
+            encoding = embedded_features
+        new_feature = self.weight.mm(encoding.t())
+
+        new_feature = F.normalize(new_feature, p=2, dim=0)
+        return new_feature.t()

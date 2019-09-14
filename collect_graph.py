@@ -70,8 +70,8 @@ def collectGraph_train_v2(node_num, class_num, feat_dim = 256, knn = 10, suffix 
     neighborhood(adjacent) relationship are constructed based on similarity between features.
     '''
 
-    feature_map = np.load('/data4/fong/pytorch/Graph/train_feature_map/feature_map_{}.npy'.format(round))
-    label = np.load('/data4/fong/pytorch/Graph/train_feature_map/label.npy')
+    feature_map = np.load('train_feature_map/feature_map_{}.npy'.format(round))
+    label = np.load('train_feature_map/label.npy')
 
     similarity = np.dot(feature_map, feature_map.T)
     sort_id = np.argsort(-similarity, axis=1)
@@ -87,8 +87,6 @@ def collectGraph_train_v2(node_num, class_num, feat_dim = 256, knn = 10, suffix 
     for n in range(node_num):
         for k in range(1, knn+1):
             adj_lists[n].add((sort_id[n,k], similarity[n, sort_id[n][k]]))
-
-    # feature_map = np.load('/data4/fong/pytorch/Graph/train_feature_map/feature_map_0.npy')
 
     return label, feature_map, adj_lists
 
@@ -111,9 +109,9 @@ def collectGraph_test(feature_path, node_num, feat_dim = 256, knn = 10, suffix =
         for k in range(1, knn+1):
             adj_lists[n].add((sort_id[n,k], similarity[n, sort_id[n][k]]))
 
-    # feature_map = np.load(os.path.join(feature_path, 'feature_map_0.npy'))
+    query_feature = np.load(os.path.join(feature_path, 'query.npy'))
 
-    return feature_map, adj_lists
+    return feature_map, adj_lists, query_feature
 
 if __name__ == "__main__":
     node_num, class_num = removeIsolated(suffix = '.f.npy')
