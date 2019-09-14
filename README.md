@@ -3,6 +3,12 @@ Image retrieval by using graph for feature aggregation.
 
 Based on the implementation of https://github.com/williamleif/graphsage-simple s.t. "GraphSage: Representation Learning on Large Graphs."
 
+# note
+
+Online query-embedding inference.
+
+Query is not included in database.
+
 # requirements
 
 Pytorch: 1.0
