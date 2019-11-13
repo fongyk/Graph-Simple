@@ -10,7 +10,7 @@ def removeIsolated(suffix = '.f.npy'):
     remove isolated points which have no neighbors.
     return number of nodes and categories.
     '''
-    src_folder = '/data4/fong/pytorch/Graph/train_feature'
+    src_folder = '/path/to/train_feature'
     class_folders = os.listdir(src_folder)
     node_num = 0
     class_num = 0
@@ -40,7 +40,7 @@ def collectGraph_train(node_num, class_num, feat_dim = 256, suffix = '.f.npy'):
     feature_map = np.zeros((node_num, feat_dim))
     adj_lists = defaultdict(set)
 
-    src_folder = '/data4/fong/pytorch/Graph/train_feature'
+    src_folder = '/path/to/train_feature'
     class_folders = os.listdir(src_folder)
     idx = 0
     for c, folder in enumerate(class_folders):
@@ -78,9 +78,6 @@ def collectGraph_train_v2(node_num, class_num, feat_dim = 256, knn = 10, suffix 
     for n in range(node_num):
         similarity[n, sort_id[n, knn+1:]] = 0
         similarity[n] /= np.sum(similarity[n])
-        # similarity[n, sort_id[n, knn+1:]] = -9e10
-        # similarity[n] = np.exp(similarity[n])
-        # similarity[n] /= np.sum(similarity[n])
 
     adj_lists = defaultdict(set)
 
@@ -99,9 +96,6 @@ def collectGraph_test(feature_path, node_num, feat_dim = 256, knn = 10, suffix =
     for n in range(node_num):
         similarity[n, sort_id[n, knn+1:]] = 0
         similarity[n] /= np.sum(similarity[n])
-        # similarity[n, sort_id[n, knn+1:]] = -9e10
-        # similarity[n] = np.exp(similarity[n])
-        # similarity[n] /= np.sum(similarity[n])
 
     adj_lists = defaultdict(set)
 
@@ -117,4 +111,4 @@ if __name__ == "__main__":
     node_num, class_num = removeIsolated(suffix = '.f.npy')
     node_num, class_num = removeIsolated(suffix = '.fr.npy')
     node_num, class_num = removeIsolated(suffix = '.frmac.npy')
-    # label, feature_map, adj_lists = collectGraph_train(node_num, class_num)
+    node_num, class_num = removeIsolated(suffix = '.frmac.npy')

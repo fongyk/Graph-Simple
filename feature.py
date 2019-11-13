@@ -25,18 +25,18 @@ img_transform = transforms.Compose([
 ])
 
 train_feature_path = "train_feature"
-train_path = "/data4/fong/landmark_clean"
+train_path = "/path/to/landmark_clean"
 train_data = ImageFolder(train_path, transform=img_transform)
 train_dataloader = DataLoader(dataset=train_data, shuffle=False, num_workers=4, batch_size=1)
 
 test_dataset = {
     'oxf': {
-        'img_path': '/data4/fong/pytorch/RankNet/building/test_oxf',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature/oxford',
+        'img_path': '/path/to/images',
+        'feature_path': '/path/to/feature',
     },
     'par':{
-        'img_path': '/data4/fong/pytorch/RankNet/building/test_par',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature/paris',
+        'img_path': '/path/to/images',
+        'feature_path': '/path/to/feature',
     }
 }
 test_data_oxf = ImageFolder(test_dataset['oxf']['img_path'], transform=img_transform)
@@ -167,16 +167,6 @@ def loadRMACfeatureFromMat(feature_path, matFile):
     np.save(os.path.join(feature_path, 'query_idx.npy'), query_idx)
 
 if __name__ == "__main__":
-    # model, suffix = AlexNetFeature(), '.f.npy'
-    # model, suffix = VGGNetFeature(), '.f.npy'
-    # model, suffix = ResNetFeature(), '.fr.npy'
-    # extractFeature(model, train_dataloader, train_feature_path, True, suffix)
-    # for building, building_dataloader in test_dataloader.items():
-    #     extractFeature(model, building_dataloader, test_dataset[building]['feature_path'], True, suffix)
-
-    # proceeRMACfeature('/data4/fong/landmark_clean', '/data4/fong/R-MAC/vgg16_rmac/landmark_clean', '/data4/fong/pytorch/Graph/train_feature')
-    # proceeRMACfeature('/data4/fong/pytorch/RankNet/building/test_oxf', '/data4/fong/R-MAC/vgg16_rmac/oxford5k', '/data4/fong/pytorch/Graph/test_feature/oxford')
-    # proceeRMACfeature('/data4/fong/pytorch/RankNet/building/test_par', '/data4/fong/R-MAC/vgg16_rmac/paris6k', '/data4/fong/pytorch/Graph/test_feature/paris')
-
-    loadRMACfeatureFromMat('/data4/fong/pytorch/Graph/test_feature_map/oxford', 'oxf_feat.mat')
-    loadRMACfeatureFromMat('/data4/fong/pytorch/Graph/test_feature_map/paris', 'par_feat.mat')
+    model, suffix = AlexNetFeature(), '.f.npy'
+    for building, building_dataloader in test_dataloader.items():
+        extractFeature(model, building_dataloader, test_dataset[building]['feature_path'], True, suffix)

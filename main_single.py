@@ -18,20 +18,20 @@ import os
 import argparse
 import ast
 
-eval_func = '/data4/fong/oxford5k/evaluation/compute_ap'
-retrieval_result = '/data4/fong/pytorch/Graph/retrieval'
+eval_func = '/path/to/compute_ap'
+retrieval_result = '/path/to/retrieval'
 test_dataset = {
     'oxf': {
         'node_num': 5063,
-        'img_testpath': '/data4/fong/pytorch/RankNet/building/test_oxf/images',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature_map/oxford',
-        'gt_path': '/data4/fong/oxford5k/oxford5k_groundTruth',
+        'img_testpath': '/path/to/images',
+        'feature_path': '/path/to/feature',
+        'gt_path': '/path/to/oxford5k_groundTruth',
     },
     'par': {
         'node_num': 6392,
-        'img_testpath': '/data4/fong/pytorch/RankNet/building/test_par/images',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature_map/paris',
-        'gt_path': '/data4/fong/paris6k/paris_groundTruth',
+        'img_testpath': '/path/to/images',
+        'feature_path': '/path/to/feature',
+        'gt_path': '/path/to/paris6k_groundTruth',
     }
 }
 building_oxf = buildTestData(img_path=test_dataset['oxf']['img_testpath'], gt_path=test_dataset['oxf']['gt_path'], eval_func=eval_func)
@@ -86,10 +86,6 @@ def train(checkpoint_path, round, args):
     rand_indices = np.random.permutation(node_num)
     train_nodes = list(rand_indices[:args.train_num])
     val_nodes = list(rand_indices[args.train_num:])
-    # for nt in train_nodes:
-    #     for vt in val_nodes:
-    #         if vt in adj_lists[nt]:
-    #             adj_lists[nt].remove(vt)
 
     epoch_num = args.epoch_num
     batch_size = args.batch_size

@@ -19,20 +19,20 @@ import ast
 
 import sys
 
-eval_func = '/data4/fong/oxford5k/evaluation/compute_ap'
-retrieval_result = '/data4/fong/pytorch/Graph/retrieval'
+eval_func = '/path/to/compute_ap'
+retrieval_result = '/path/to/retrieval'
 test_dataset = {
     'oxf': {
         'node_num': 5063,
-        'img_testpath': '/data4/fong/pytorch/RankNet/building/test_oxf/images',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature_map/oxford',
-        'gt_path': '/data4/fong/oxford5k/oxford5k_groundTruth',
+        'img_testpath': '/path/to/images',
+        'feature_path': '/path/to/feature',
+        'gt_path': '/path/to/oxford5k_groundTruth',
     },
     'par': {
         'node_num': 6392,
-        'img_testpath': '/data4/fong/pytorch/RankNet/building/test_par/images',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature_map/paris',
-        'gt_path': '/data4/fong/paris6k/paris_groundTruth',
+        'img_testpath': '/path/to/images',
+        'feature_path': '/path/to/feature',
+        'gt_path': '/path/to/paris6k_groundTruth',
     }
 }
 building_oxf = buildTestData(img_path=test_dataset['oxf']['img_testpath'], gt_path=test_dataset['oxf']['gt_path'], eval_func=eval_func)
@@ -63,22 +63,12 @@ def train(args):
     ## load training data
     print "loading training data ......"
     node_num, class_num = removeIsolated(args.suffix)
-    # node_num, class_num = 33792, 569
-    # label, feature_map, adj_lists = collectGraph_train(node_num, class_num, args.feat_dim, args.suffix)
     label, feature_map, adj_lists = collectGraph_train_v2(node_num, class_num, args.feat_dim, args.num_sample, args.suffix)
 
     graphsage = makeModel(node_num, class_num, feature_map, adj_lists, args)
 
     optimizer = torch.optim.Adam(filter(lambda para: para.requires_grad, graphsage.parameters()), lr=args.learning_rate, weight_decay=1e-5)
     scheduler = StepLR(optimizer, step_size=args.step_size, gamma=0.5)
-
-    # for name, para in graphsage.named_parameters():
-    #     print name
-    #     print para.requires_grad
-    #     print para
-    # sys.exit(0)
-    # print optimizer.param_groups
-    # sys.exit(0)
 
     ## train
     random.seed(2)
@@ -230,5 +220,4 @@ if __name__ == "__main__":
     checkpoint_path, class_num = train(args)
 
     print "testing ......"
-    # checkpoint_path, class_num = 'checkpoint/checkpoint_single_unsup_201909121128.pth', 569
     test(checkpoint_path, class_num, args)
