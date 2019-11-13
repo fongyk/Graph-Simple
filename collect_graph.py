@@ -88,8 +88,6 @@ def collectGraph_train_v2(node_num, class_num, feat_dim = 256, knn = 10, suffix 
         for k in range(1, knn+1):
             adj_lists[n].add((sort_id[n,k], similarity[n, sort_id[n][k]]))
 
-    # feature_map = np.load('/data4/fong/pytorch/Graph/train_feature_map/feature_map_0.npy')
-
     return label, feature_map, adj_lists
 
 def collectGraph_test(feature_path, node_num, feat_dim = 256, knn = 10, suffix = '.f.npy', round="0"):
