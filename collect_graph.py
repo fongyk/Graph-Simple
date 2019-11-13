@@ -10,7 +10,7 @@ def removeIsolated(suffix = '.f.npy'):
     remove isolated points which have no neighbors.
     return number of nodes and categories.
     '''
-    src_folder = '/data4/fong/pytorch/Graph/train_feature'
+    src_folder = '/path/to/train_feature'
     class_folders = os.listdir(src_folder)
     node_num = 0
     class_num = 0
@@ -40,7 +40,7 @@ def collectGraph_train(node_num, class_num, feat_dim = 256, suffix = '.f.npy'):
     feature_map = np.zeros((node_num, feat_dim))
     adj_lists = defaultdict(set)
 
-    src_folder = '/data4/fong/pytorch/Graph/train_feature'
+    src_folder = '/path/to/train_feature'
     class_folders = os.listdir(src_folder)
     idx = 0
     for c, folder in enumerate(class_folders):
@@ -70,8 +70,8 @@ def collectGraph_train_v2(node_num, class_num, feat_dim = 256, knn = 10, suffix 
     neighborhood(adjacent) relationship are constructed based on similarity between features.
     '''
 
-    feature_map = np.load('/data4/fong/pytorch/Graph/train_feature_map/feature_map_{}.npy'.format(round))
-    label = np.load('/data4/fong/pytorch/Graph/train_feature_map/label.npy')
+    feature_map = np.load('/path/to/feature_map_{}.npy'.format(round))
+    label = np.load('/path/to/label.npy')
 
     similarity = np.dot(feature_map, feature_map.T)
     sort_id = np.argsort(-similarity, axis=1)
@@ -111,12 +111,9 @@ def collectGraph_test(feature_path, node_num, feat_dim = 256, knn = 10, suffix =
         for k in range(1, knn+1):
             adj_lists[n].add((sort_id[n,k], similarity[n, sort_id[n][k]]))
 
-    # feature_map = np.load(os.path.join(feature_path, 'feature_map_0.npy'))
-
     return feature_map, adj_lists
 
 if __name__ == "__main__":
     node_num, class_num = removeIsolated(suffix = '.f.npy')
     node_num, class_num = removeIsolated(suffix = '.fr.npy')
     node_num, class_num = removeIsolated(suffix = '.frmac.npy')
-    # label, feature_map, adj_lists = collectGraph_train(node_num, class_num)
