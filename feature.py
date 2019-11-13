@@ -147,5 +147,6 @@ def proceeRMACfeature(img_path, src_path, dest_path):
     print "number of features:", cnt
 
 if __name__ == "__main__":
+    model, suffix = AlexNetFeature(), '.f.npy'
     for building, building_dataloader in test_dataloader.items():
         extractFeature(model, building_dataloader, test_dataset[building]['feature_path'], True, suffix)
