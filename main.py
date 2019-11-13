@@ -16,20 +16,20 @@ from tqdm import tqdm
 import argparse
 import ast
 
-eval_func = '/data4/fong/oxford5k/evaluation/compute_ap'
-retrieval_result = '/data4/fong/pytorch/Graph/retrieval'
+eval_func = '/path/to/compute_ap'
+retrieval_result = '/path/to/retrieval'
 test_dataset = {
     'oxf': {
         'node_num': 5063,
-        'img_testpath': '/data4/fong/pytorch/RankNet/building/test_oxf/images',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature_map/oxford',
-        'gt_path': '/data4/fong/oxford5k/oxford5k_groundTruth',
+        'img_testpath': '/path/to/images',
+        'feature_path': '/path/to/feature',
+        'gt_path': '/path/to/oxford5k_groundTruth',
     },
     'par': {
         'node_num': 6392,
-        'img_testpath': '/data4/fong/pytorch/RankNet/building/test_par/images',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature_map/paris',
-        'gt_path': '/data4/fong/paris6k/paris_groundTruth',
+        'img_testpath': '/path/to/images',
+        'feature_path': '/path/to/feature',
+        'gt_path': '/path/to/paris6k_groundTruth',
     }
 }
 building_oxf = buildTestData(img_path=test_dataset['oxf']['img_testpath'], gt_path=test_dataset['oxf']['gt_path'], eval_func=eval_func)
@@ -64,18 +64,11 @@ def makeModel(node_num, class_num, feature_map, adj_lists, args):
 def train(args):
     ## load training data
     print "loading training data ......"
-    # node_num, class_num = removeIsolated(args.suffix)
     node_num, class_num = 33792, 569
-    # label, feature_map, adj_lists = collectGraph_train(node_num, class_num, args.feat_dim, args.suffix)
     label, feature_map, adj_lists = collectGraph_train_v2(node_num, class_num, args.feat_dim, args.num_sample, args.suffix)
 
     graphsage = makeModel(node_num, class_num, feature_map, adj_lists, args)
 
-    # for name, para in graphsage.named_parameters():
-    #     print name
-    #     print para
-
-    # optimizer = torch.optim.SGD(filter(lambda para: para.requires_grad, graphsage.parameters()), lr=args.learning_rate)
     optimizer = torch.optim.Adam([
         {'params': filter(lambda para: para.requires_grad, graphsage.parameters()), 'lr': args.learning_rate},
     ])
@@ -100,10 +93,6 @@ def train(args):
         graphsage.train()
         scheduler.step()
 
-        # for name, para in graphsage.named_parameters():
-        #     if name == 'encoder_1.weight':
-        #         print para
-
         random.shuffle(train_nodes)
         for batch in range(iter_num):
             batch_nodes = train_nodes[batch*batch_size: (batch+1)*batch_size]
@@ -113,7 +102,6 @@ def train(args):
                 batch_label = batch_label.cuda()
             optimizer.zero_grad()
             loss = graphsage.loss(batch_nodes, batch_label)
-            # loss = graphsage.loss(batch_nodes, positive_nodes, batch_label)
             loss.backward()
             optimizer.step()
             iter_cnt += 1
@@ -244,6 +232,4 @@ if __name__ == "__main__":
     checkpoint_path, class_num = train(args)
 
     print "testing ......"
-    # checkpoint_path = 'checkpoint/checkpoint_201904211901.pth'
-    # class_num = 569
     test(checkpoint_path, class_num, args)

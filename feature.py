@@ -24,18 +24,18 @@ img_transform = transforms.Compose([
 ])
 
 train_feature_path = "train_feature"
-train_path = "/data4/fong/landmark_clean"
+train_path = "/path/to/landmark_clean"
 train_data = ImageFolder(train_path, transform=img_transform)
 train_dataloader = DataLoader(dataset=train_data, shuffle=False, num_workers=4, batch_size=1)
 
 test_dataset = {
     'oxf': {
-        'img_path': '/data4/fong/pytorch/RankNet/building/test_oxf',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature/oxford',
+        'img_path': '/path/to/images',
+        'feature_path': '/path/to/feature',
     },
     'par':{
-        'img_path': '/data4/fong/pytorch/RankNet/building/test_par',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature/paris',
+        'img_path': '/path/to/images',
+        'feature_path': '/path/to/feature',
     }
 }
 test_data_oxf = ImageFolder(test_dataset['oxf']['img_path'], transform=img_transform)
@@ -133,9 +133,6 @@ def proceeRMACfeature(img_path, src_path, dest_path):
             fr = open(src_feature, 'rb')
             feat_dim = 512
             f_max = struct.unpack('f'*feat_dim, fr.read(4*feat_dim))
-            # f_max = np.array(f_max)
-            # f_max = f_max.reshape(1, -1)
-            # f_max = preprocessing.normalize(f_max, norm='l2', axis=1)
             f_rmac = struct.unpack('f'*feat_dim, fr.read(4*feat_dim))
             f_rmac = np.array(f_rmac)
             f_rmac = f_rmac.reshape(1, -1)
@@ -144,20 +141,11 @@ def proceeRMACfeature(img_path, src_path, dest_path):
             if not os.path.exists(feature_folder):
                 os.makedirs(feature_folder)
             dest_feature = os.path.join(feature_folder, str(cnt) + '.frmac.npy')
-            # np.save(dest_feature, np.column_stack((f_max, f_rmac)))
             np.save(dest_feature, f_rmac)
             fr.close()
             cnt += 1
     print "number of features:", cnt
 
 if __name__ == "__main__":
-    # model, suffix = AlexNetFeature(), '.f.npy'
-    # model, suffix = VGGNetFeature(), '.f.npy'
-    # model, suffix = ResNetFeature(), '.fr.npy'
-    # extractFeature(model, train_dataloader, train_feature_path, True, suffix)
-    # for building, building_dataloader in test_dataloader.items():
-    #     extractFeature(model, building_dataloader, test_dataset[building]['feature_path'], True, suffix)
-
-    # proceeRMACfeature('/data4/fong/landmark_clean', '/data4/fong/R-MAC/vgg16_rmac/landmark_clean', '/data4/fong/pytorch/Graph/train_feature')
-    # proceeRMACfeature('/data4/fong/pytorch/RankNet/building/test_oxf', '/data4/fong/R-MAC/vgg16_rmac/oxford5k', '/data4/fong/pytorch/Graph/test_feature/oxford')
-    # proceeRMACfeature('/data4/fong/pytorch/RankNet/building/test_par', '/data4/fong/R-MAC/vgg16_rmac/paris6k', '/data4/fong/pytorch/Graph/test_feature/paris')
+    for building, building_dataloader in test_dataloader.items():
+        extractFeature(model, building_dataloader, test_dataset[building]['feature_path'], True, suffix)

@@ -78,9 +78,6 @@ def collectGraph_train_v2(node_num, class_num, feat_dim = 256, knn = 10, suffix 
     for n in range(node_num):
         similarity[n, sort_id[n, knn+1:]] = 0
         similarity[n] /= np.sum(similarity[n])
-        # similarity[n, sort_id[n, knn+1:]] = -9e10
-        # similarity[n] = np.exp(similarity[n])
-        # similarity[n] /= np.sum(similarity[n])
 
     adj_lists = defaultdict(set)
 
@@ -99,9 +96,6 @@ def collectGraph_test(feature_path, node_num, feat_dim = 256, knn = 10, suffix =
     for n in range(node_num):
         similarity[n, sort_id[n, knn+1:]] = 0
         similarity[n] /= np.sum(similarity[n])
-        # similarity[n, sort_id[n, knn+1:]] = -9e10
-        # similarity[n] = np.exp(similarity[n])
-        # similarity[n] /= np.sum(similarity[n])
 
     adj_lists = defaultdict(set)
 

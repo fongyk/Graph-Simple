@@ -18,20 +18,20 @@ import os
 import argparse
 import ast
 
-eval_func = '/data4/fong/oxford5k/evaluation/compute_ap'
-retrieval_result = '/data4/fong/pytorch/Graph/retrieval'
+eval_func = '/path/to/compute_ap'
+retrieval_result = '/path/to/retrieval'
 test_dataset = {
     'oxf': {
         'node_num': 5063,
-        'img_testpath': '/data4/fong/pytorch/RankNet/building/test_oxf/images',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature_map/oxford',
-        'gt_path': '/data4/fong/oxford5k/oxford5k_groundTruth',
+        'img_testpath': '/path/to/images',
+        'feature_path': '/path/to/feature',
+        'gt_path': '/path/to/oxford5k_groundTruth',
     },
     'par': {
         'node_num': 6392,
-        'img_testpath': '/data4/fong/pytorch/RankNet/building/test_par/images',
-        'feature_path': '/data4/fong/pytorch/Graph/test_feature_map/paris',
-        'gt_path': '/data4/fong/paris6k/paris_groundTruth',
+        'img_testpath': '/path/to/images',
+        'feature_path': '/path/to/feature',
+        'gt_path': '/path/to/paris6k_groundTruth',
     }
 }
 building_oxf = buildTestData(img_path=test_dataset['oxf']['img_testpath'], gt_path=test_dataset['oxf']['gt_path'], eval_func=eval_func)
@@ -61,7 +61,6 @@ def makeModel(node_num, class_num, feature_map, adj_lists, args):
 def train(checkpoint_path, round, args):
     ## load training data
     print "loading training data ......"
-    # node_num, class_num = removeIsolated(args.suffix)
     node_num, class_num = 33792, 569
     label, feature_map, adj_lists = collectGraph_train_v2(node_num, class_num, args.feat_dim, args.num_sample, args.suffix, round)
 
@@ -74,7 +73,6 @@ def train(checkpoint_path, round, args):
     #     graphsage_state_dict.update({'encoder.weight': checkpoint['graph_state_dict']['encoder.weight']})
     #     graphsage.load_state_dict(graphsage_state_dict)
 
-    # optimizer = torch.optim.SGD(filter(lambda para: para.requires_grad, graphsage.parameters()), lr=args.learning_rate)
     optimizer = torch.optim.Adam(
         filter(lambda para: para.requires_grad, graphsage.parameters()), lr=args.learning_rate*(0.8**round),
     )
@@ -86,11 +84,7 @@ def train(checkpoint_path, round, args):
     rand_indices = np.random.permutation(node_num)
     train_nodes = list(rand_indices[:args.train_num])
     val_nodes = list(rand_indices[args.train_num:])
-    # for nt in train_nodes:
-    #     for vt in val_nodes:
-    #         if vt in adj_lists[nt]:
-    #             adj_lists[nt].remove(vt)
-
+	
     epoch_num = args.epoch_num
     batch_size = args.batch_size
     iter_num = int(math.ceil(args.train_num / float(batch_size)))
@@ -146,7 +140,7 @@ def train(checkpoint_path, round, args):
         new_feature = F.normalize(new_feature, p=2, dim=0)
         new_feature_map = torch.cat((new_feature_map, new_feature.t().cpu().data), dim=0)
     new_feature_map = new_feature_map.numpy()
-    np.save('/data4/fong/pytorch/Graph/train_feature_map/feature_map_{}.npy'.format(round+1), new_feature_map)
+    np.save('train_feature_map/feature_map_{}.npy'.format(round+1), new_feature_map)
 
     checkpoint_path = 'checkpoint/checkpoint_single_{}.pth'.format(time.strftime('%Y%m%d%H%M'))
     torch.save({
