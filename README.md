@@ -3,15 +3,15 @@ Image retrieval by using graph for feature aggregation.
 
 Based on the implementation of https://github.com/williamleif/graphsage-simple s.t. "GraphSage: Representation Learning on Large Graphs."
 
-# requirements
+## requirements
 
 - Pytorch: 1.0
 
 - Python: 2.7
 
-# datasets
+## datasets
 
-## testing
+### testing
 
 - Oxford5k
 
@@ -22,7 +22,7 @@ Based on the implementation of https://github.com/williamleif/graphsage-simple s
   https://www.robots.ox.ac.uk/~vgg/data/parisbuildings/
 
 
-## training
+### training
 
 - landmark_clean
 
