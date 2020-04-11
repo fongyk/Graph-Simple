@@ -213,19 +213,8 @@ if __name__ == "__main__":
     args, _ = parser.parse_known_args()
     print "< < < < < < < < < < < Supervised GraphSAGE > > > > > > > > > >"
     print "= = = = = = = = = = = PARAMETERS SETTING = = = = = = = = = = ="
-    print "epoch_num:", args.epoch_num
-    print "step_size:", args.step_size
-    print "batch_size:", args.batch_size
-    print "check_step:", args.check_step
-    print "train_num:", args.train_num
-    print "learning_rate:", args.learning_rate
-    print "suffix:", args.suffix
-    print "feat_dim:", args.feat_dim
-    print "embed_dim_1:", args.embed_dim_1
-    print "embed_dim_2:", args.embed_dim_2
-    print "num_sample:", args.num_sample
-    print "use_cuda:", args.use_cuda
-    print "use_gcn:", args.use_gcn
+    for k, v in vars(args).items():
+        print k, ":", v
     print "= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = ="
 
     # print "training ......"
